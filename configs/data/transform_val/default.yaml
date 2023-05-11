@@ -1,0 +1,18 @@
+_target_: albumentations.Compose
+keypoint_params:
+  _target_: albumentations.KeypointParams
+  format: "xy"
+  remove_invisible: false
+transforms:
+- _target_: albumentations.Resize
+  height: 256
+  width: 256
+  always_apply: true
+- _target_: albumentations.CenterCrop
+  height: 224
+  width: 224
+  always_apply: true
+- _target_: albumentations.Normalize
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
+- _target_: albumentations.pytorch.transforms.ToTensorV2

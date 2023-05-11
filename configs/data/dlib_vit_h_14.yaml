@@ -1,0 +1,21 @@
+_target_: src.data.dlib_datamodule.DlibDataModule
+
+defaults:
+  - transform_train: vit_h_14.yaml
+  - transform_val: vit_h_14.yaml
+
+data_dir: ${paths.data_dir}/ibug_300W_large_face_landmark_dataset
+batch_size: 16
+train_val_test_split: [5_666, 1_000]
+num_workers: 0
+pin_memory: False
+
+data_train:
+  _target_: src.data.dlib_datamodule.DlibDataset
+  _partial_: true # need_to supply data_dir in setup()
+  xml_file: labels_ibug_300W_train.xml
+
+data_test:
+  _target_: src.data.dlib_datamodule.DlibDataset
+  _partial_: true # need_to supply data_dir in setup()
+  xml_file: labels_ibug_300W_test.xml
