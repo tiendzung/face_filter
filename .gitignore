@@ -153,3 +153,6 @@ configs/local/default.yaml
 /data
 /logs
 /outputs/
+
+checkpoints/
+video/
