@@ -17,10 +17,10 @@ from hydra.core.config_store import ConfigStore
 from hydra.types import TargetConf
 from omegaconf import DictConfig
 
-__file__ = '/Users/tiendzung/Downloads/facial_landmarks-wandb/src/run.py'
+__file__ = '/Users/tiendzung/Project/facial_landmarks-wandb/src/app/run.py'
 path = pyrootutils.find_root(
     search_from=__file__, indicator=".project-root")
-config_path = str(path / "configs" / "model")
+config_path = str(path / "configs")
 output_path = path / "outputs"
 pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
@@ -54,10 +54,11 @@ def calculate_inclination(point1, point2):
 def main(cfg: DictConfig):
     net = SimpleResnet()
     # print(net)
-    model = DlibLitModule.load_from_checkpoint(checkpoint_path='/Users/tiendzung/Downloads/checkpoints/epoch_095.ckpt', net = net)
+    model = DlibLitModule.load_from_checkpoint(checkpoint_path='/Users/tiendzung/Project/facial_landmarks-wandb/checkpoints/epoch_095.ckpt', net = net)
     # print(model)
 
     cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture('/Users/tiendzung/Downloads/record-webcam.mov')
     cap.set(cv2.CAP_PROP_FRAME_WIDTH,640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT,480)
     while cap.isOpened():
@@ -79,8 +80,11 @@ def main(cfg: DictConfig):
                     w = face_box[j][2] - face_box[j][0]
                     landmarks = model.forward(transform(image = face)["image"].unsqueeze(0))[0]
                     landmarks = (landmarks + 0.5) * torch.Tensor([w, h])
+                    landmarks = landmarks + torch.Tensor([face_box[j][0], face_box[j][1]])
+                    landmarks = landmarks.detach().numpy()
+
                     for i in range (landmarks.shape[0]):
-                        frame = cv2.circle(frame, (int(landmarks[i, 0] + face_box[j][0]),int(landmarks[i, 1] + face_box[j][1])), radius=1, color=(255, 255, 0), thickness= 1)
+                        frame = cv2.circle(frame, (int(landmarks[i, 0]),int(landmarks[i, 1])), radius=1, color=(255, 255, 0), thickness= 1)
                     
                     incl =  calculate_inclination(landmarks[17], landmarks[26])
 
@@ -95,10 +99,10 @@ def main(cfg: DictConfig):
                     sunglass_height = int(landmarks[29][1]-landmarks[21][1])
                     sunglass_resized = cv2.resize(sunglasses, (sunglass_width, sunglass_height))
                     transparent_region = sunglass_resized[:,:,:3] != (0, 0 ,0)
-                    # print(transparent_region)
+                    # print(sunglass_resized[:,:,:3][transparent_region])
                     s_point = 17
-                    frame[int(landmarks[s_point][1] + face_box[j][1]):int(landmarks[s_point][1] + face_box[j][1])+sunglass_height, 
-                        int(landmarks[0][0] + face_box[j][0]):int(landmarks[0][0] + face_box[j][0])+sunglass_width,:][transparent_region] = sunglass_resized[:,:,:3][transparent_region]
+                    frame[int(landmarks[s_point][1]):int(landmarks[s_point][1])+sunglass_height, 
+                        int(landmarks[0][0]):int(landmarks[0][0])+sunglass_width,:][transparent_region] = sunglass_resized[:,:,:3][transparent_region]
 
 
                     beard = cv2.imread(filters[6], cv2.IMREAD_UNCHANGED)
@@ -109,8 +113,8 @@ def main(cfg: DictConfig):
                     transparent_region = beard[:,:,3] != 0
                     # print(transparent_region)
                     s_point = 2
-                    frame[int(landmarks[s_point][1] + face_box[j][1]):int(landmarks[s_point][1] + face_box[j][1])+beard_height, 
-                        int(landmarks[s_point][0] + face_box[j][0]):int(landmarks[s_point][0] + face_box[j][0])+beard_width,:][transparent_region] = beard[:,:,:3][transparent_region]
+                    frame[int(landmarks[s_point][1]):int(landmarks[s_point][1])+beard_height, 
+                        int(landmarks[s_point][0]):int(landmarks[s_point][0])+beard_width,:][transparent_region] = beard[:,:,:3][transparent_region]
 
 
         frame = frame[200:-200, 200:-200, :]
@@ -123,3 +127,6 @@ def main(cfg: DictConfig):
     cv2.destroyAllWindows()
     for i in range(30):
         cv2.waitKey(1)
+
+if __name__ == "__main__":
+    main()

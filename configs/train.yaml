@@ -45,7 +45,7 @@ train: True
 test: True
 
 # simply provide checkpoint path to resume training
-ckpt_path: /Users/tiendzung/Downloads/checkpoints/epoch_095.ckpt
+ckpt_path: /Users/tiendzung/Project/facial_landmarks-wandb/checkpoints/epoch_095.ckpt
 
 # seed for random number generators in pytorch, numpy and python.random
 seed: null

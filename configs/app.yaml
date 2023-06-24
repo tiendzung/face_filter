@@ -1,0 +1,2 @@
+ckpt_path: /Users/tiendzung/Project/facial_landmarks-wandb/checkpoints/epoch_095.ckpt
+filter_name: 'anonymous'
