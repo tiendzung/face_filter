@@ -1,6 +1,6 @@
 <div align="center">
 
-# Facial Landmarks
+# Face Filter
 
 <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
 <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=pytorchlightning&logoColor=white"></a>
@@ -13,7 +13,7 @@
 
 ## Description
 
-What it does
+This project applies a 3D filter to the face by using a model to predict 68 landmark points on the human face (Dlib) combined with Delaunay triangulation to warp the filter onto the face.
 
 ## How to run
 
@@ -55,4 +55,9 @@ You can override any parameter from command line like this
 
 ```bash
 python src/train.py trainer.max_epochs=20 data.batch_size=64
+```
+
+You can run program
+```bash
+python src/app/app.py
 ```
