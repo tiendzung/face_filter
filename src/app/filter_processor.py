@@ -11,17 +11,35 @@ import csv
 def load_filter_points(annotation_file):
     with open(annotation_file) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=",")
-        points = np.empty((0,2), float)
+        # points = np.empty((0,2), float)
+        points = {}
         for i, row in enumerate(csv_reader):
             # skip head or empty line if it's there
             try:
                 x, y = float(row[1]), float(row[2])
                 # print(x, y)
-                # points[row[0]] = (x, y)
-                points = np.append(points, np.array([[x, y]]), axis=0)
+                points[row[0]] = (x, y)
+                # points = np.append(points, np.array([[x, y]]), axis=0)
             except ValueError:
                 continue
         return points
+
+def calculate_affine_matrix_for_2_points(src, dst):
+    sin60 = np.sin(np.pi/3)
+    cos60 = np.cos(np.pi/3)
+
+    ## Add 1 point to src and dst that make equilateral triangle
+    x_src = src[0][0] + (src[1][0] - src[0][0]) * cos60 - (src[1][1] - src[0][1]) * sin60
+    y_src = src[0][1] + (src[1][0] - src[0][0]) * sin60 + (src[1][1] - src[0][1]) * cos60
+    
+    x_dst = dst[0][0] + (dst[1][0] - dst[0][0]) * cos60 - (dst[1][1] - dst[0][1]) * sin60
+    y_dst = dst[0][1] + (dst[1][0] - dst[0][0]) * sin60 - (dst[1][1] - dst[0][1]) * cos60
+
+    inp = np.append(src, np.array([[x_src, y_src]]), axis=0)
+    out = np.append(dst, np.array([[x_dst, y_dst]]), axis=0)
+
+    affine_matrix = cv2.estimateAffinePartial2D(inp, out)
+    return affine_matrix[0]
 
 ##Return vector Triangle and of vector Id
 def find_delauney(img, points):
@@ -76,6 +94,31 @@ def draw_delaunay(img, points):
         plt.plot([pt3[0], pt1[0]], [pt3[1], pt1[1]])
     
     plt.imshow(img)
+
+def wrap_affine(src, dst, tria1, tria2):
+    rect1 = cv2.boundingRect(np.float32([tria1]))
+    rect2 = cv2.boundingRect(np.float32([tria2]))
+
+    tria1Cropped = []
+    tria2Cropped = []
+
+    for i in range(3):
+        tria1Cropped.append(((tria1[i][0] - rect1[0]), (tria1[i][1] - rect1[1]))) #x - x0, y - y0
+        tria2Cropped.append(((tria2[i][0] - rect2[0]), (tria2[i][1] - rect2[1])))
+    
+    srcCropped = src[rect1[1]:rect1[1]+rect1[3], rect1[0]:rect1[0]+rect1[2]] #y -> y + h, x -> x + w
+    
+    affine_matrix = cv2.getAffineTransform(np.float32(tria1Cropped), np.float32(tria2Cropped))
+    mask = np.zeros((rect2[3], rect2[2], 3), dtype=np.float32)
+    mask = cv2.fillConvexPoly(mask, np.int32(tria1Cropped), (1.0, 1.0, 1.0), 16, 0)
+    
+    dstCropped = cv2.warpAffine(srcCropped, affine_matrix, (rect2[2], rect2[3]), None, 
+                                     flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101)
+
+    dstCropped = dstCropped * mask
+    dst[rect2[1]:rect2[1] + rect2[3], rect2[0]:rect2[0] + rect2[2]] *= ((1.0, 1.0, 1.0) - mask)
+    dst[rect2[1]:rect2[1] + rect2[3], rect2[0]:rect2[0] + rect2[2]] += dstCropped
+    return dst
 
 def apply_filter(img, img_points, filter_img, filter_points, mask_filter):
     # res = img.copy()

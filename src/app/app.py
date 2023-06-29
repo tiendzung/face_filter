@@ -7,7 +7,7 @@ import cv2
 import torch
 from PIL import Image, ImageDraw
 import pyrootutils
-_file__ = '/Users/tiendzung/Project/facial_landmarks-wandb/src/app/app.py'
+# _file__ = '/Users/tiendzung/Project/facial_landmarks-wandb/src/app/app.py'
 path = pyrootutils.find_root(search_from=__file__, indicator=".project-root")
 config_path = str(path / "configs")
 output_path = path / "outputs"
@@ -129,16 +129,26 @@ def main(cfg: DictConfig):
                     # for i in range (landmarks.shape[0]):
                     #     frame = cv2.circle(frame, (int(landmarks[i, 0]),int(landmarks[i, 1])), radius=1, color=(255, 255, 0), thickness= 1) ##Draw landmarks
                     
-                    filter_img = cv2.imread(filter[0]['path'], cv2.IMREAD_UNCHANGED)
-                    filter_points = fp.load_filter_points(filter[0]['anno_path'])
-                
-                    ## Get alpha channel
-                    alpha = []
-                    if filter[0]['has_alpha']:
-                        b, g, r, alpha = cv2.split(filter_img)
-                        filter_img = cv2.merge((b, g, r))
+                    for i in range(len(filter)):
+                        filter_img = cv2.imread(filter[i]['path'], cv2.IMREAD_UNCHANGED)
+                        filter_points = fp.load_filter_points(filter[i]['anno_path'])
+                        wrapImage = frame.copy()
 
-                    frame = fp.apply_filter(frame, landmarks, filter_img, filter_points, alpha)
+                        ## Get alpha channel
+                        alpha = []
+                        if filter[i]['has_alpha']:
+                            b, g, r, alpha = cv2.split(filter_img)
+                            filter_img = cv2.merge((b, g, r))
+                        
+                        if filter[i]['morph']:
+                            filter_points = np.array(list(filter_points.values()))
+                            frame = fp.apply_filter(frame, landmarks, filter_img, filter_points, alpha)
+                        else:
+                            dst_points = np.array(landmarks[int(list(filter_points.keys())[0])], landmarks[int(list(filter_points.keys())[1])])
+                            src_points = np.array(list(filter_points.values()))
+                            affine_matrix = fp.calculate_affine_matrix_for_2_points(src_points, dst_points)
+
+
             frame = frame[200:-200, 200:-200, :]
         # frame = frame[200:-200, 200:-200, :]
         video_writer.write(frame)
