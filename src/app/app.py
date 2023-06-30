@@ -42,13 +42,13 @@ transform = Compose([
 
 # config for filter
 filters_config = {
-    'squid_game_front_man':
-        [{'path': "filters/squid_game_front_man.png",
-          'anno_path': "filters/squid_game_front_man.csv",
-          'morph': True, 'animated': False, 'has_alpha': True}],
     'anonymous':
         [{'path': "filters/anonymous.png",
           'anno_path': "filters/anonymous_annotations.csv",
+          'morph': True, 'animated': False, 'has_alpha': True}],
+    'squid_game_front_man':
+        [{'path': "filters/squid_game_front_man.png",
+          'anno_path': "filters/squid_game_front_man.csv",
           'morph': True, 'animated': False, 'has_alpha': True}],
     'dog':
         [{'path': "filters/dog-ears.png",
@@ -80,7 +80,8 @@ def init_video_writer(cap):
     frame_size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     return cv2.VideoWriter(os.path.join(output_path,'output.mp4'), fourcc, fps, frame_size)
-    
+
+
 @hydra.main(version_base="1.3", config_path=config_path, config_name="app")
 def main(cfg: DictConfig):
     filter = filters_config[cfg.filter_name]
@@ -99,11 +100,12 @@ def main(cfg: DictConfig):
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH,cam_width/2) #960
     # cap.set(cv2.CAP_PROP_FRAME_HEIGHT,cam_height/2) #540
     video_writer = init_video_writer(cap)
-
+    # filter = []
     while cap.isOpened():
         isSuccess, frame = cap.read()
-        # print(frame.shape)
+
         if isSuccess:
+            # print(filter[0]['path'])
             frame = np.pad(frame, ((200, 200), (200, 200), (0, 0)), mode='constant', constant_values=0)
             boxes, _ = mtcnn.detect(frame)
             faces = mtcnn(frame)
@@ -169,11 +171,20 @@ def main(cfg: DictConfig):
                         # frame = output
             frame = frame[200:-200, 200:-200, :]
         # frame = frame[200:-200, 200:-200, :]
-        # video_writer.write(frame)
+
+        video_writer.write(frame)
         cv2.imshow('Face Filter', frame)
         if cv2.waitKey(1)&0xFF == 27:
             print("YES")
             break
+        if cv2.waitKey(1)&0xFF == ord('f'):
+            try:
+                filter = filters_config[next(iter_filters_config)]
+            except:
+                iter_filters_config = iter(filters_config)
+                filter_name = next(iter_filters_config)
+                filter = filters_config[filter_name]
+                print(filter_name)
 
     cap.release()
     cv2.destroyAllWindows()
