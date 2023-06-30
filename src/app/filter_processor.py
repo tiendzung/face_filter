@@ -33,7 +33,7 @@ def calculate_affine_matrix_for_2_points(src, dst):
     y_src = src[0][1] + (src[1][0] - src[0][0]) * sin60 + (src[1][1] - src[0][1]) * cos60
     
     x_dst = dst[0][0] + (dst[1][0] - dst[0][0]) * cos60 - (dst[1][1] - dst[0][1]) * sin60
-    y_dst = dst[0][1] + (dst[1][0] - dst[0][0]) * sin60 - (dst[1][1] - dst[0][1]) * cos60
+    y_dst = dst[0][1] + (dst[1][0] - dst[0][0]) * sin60 + (dst[1][1] - dst[0][1]) * cos60
 
     inp = np.append(src, np.array([[x_src, y_src]]), axis=0)
     out = np.append(dst, np.array([[x_dst, y_dst]]), axis=0)
@@ -156,7 +156,7 @@ def apply_filter(img, img_points, filter_img, filter_points, mask_filter):
         mask_filterCropped = cv2.warpAffine( mask_filterCropped, warpMat, (r1[2], r1[3]), None, 
                                      flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT )
         
-        mask_filterCropped = cv2.merge((mask_filterCropped, mask_filterCropped, mask_filterCropped))
+        # mask_filterCropped = cv2.merge((mask_filterCropped, mask_filterCropped, mask_filterCropped))
 
         mask = np.zeros((r1[3], r1[2], 3), dtype = np.float32)
         mask = cv2.fillConvexPoly(mask, np.int32(trig1Cropped), (1.0, 1.0, 1.0), 16, 0)

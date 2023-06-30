@@ -84,6 +84,7 @@ def init_video_writer(cap):
 @hydra.main(version_base="1.3", config_path=config_path, config_name="app")
 def main(cfg: DictConfig):
     filter = filters_config[cfg.filter_name]
+    print(cfg.filter_name)
     net = SimpleResnet()
     model = DlibLitModule.load_from_checkpoint(checkpoint_path=cfg.ckpt_path, net = net)
 
@@ -132,26 +133,43 @@ def main(cfg: DictConfig):
                     for i in range(len(filter)):
                         filter_img = cv2.imread(filter[i]['path'], cv2.IMREAD_UNCHANGED)
                         filter_points = fp.load_filter_points(filter[i]['anno_path'])
-                        wrapImage = frame.copy()
 
                         ## Get alpha channel
                         alpha = []
                         if filter[i]['has_alpha']:
                             b, g, r, alpha = cv2.split(filter_img)
                             filter_img = cv2.merge((b, g, r))
-                        
+
+                        wrapImage = frame.copy()
+                        mask = np.zeros((wrapImage.shape[0], wrapImage.shape[1], 3), dtype=np.float32)
+                        alpha = cv2.merge((alpha, alpha, alpha))
+
                         if filter[i]['morph']:
                             filter_points = np.array(list(filter_points.values()))
+                            # fp.wrap_affine(filter_img, wrapImage, filter_points, landmarks)
+                            # fp.wrap_affine(alpha, mask, filter_points, landmarks)
+
                             frame = fp.apply_filter(frame, landmarks, filter_img, filter_points, alpha)
                         else:
-                            dst_points = np.array(landmarks[int(list(filter_points.keys())[0])], landmarks[int(list(filter_points.keys())[1])])
+                            dst_points = np.array((landmarks[int(list(filter_points.keys())[0])], landmarks[int(list(filter_points.keys())[1])]))
                             src_points = np.array(list(filter_points.values()))
                             affine_matrix = fp.calculate_affine_matrix_for_2_points(src_points, dst_points)
 
+                            wrapImage = cv2.warpAffine(filter_img, affine_matrix, (wrapImage.shape[1], wrapImage.shape[0]))
+                            mask = cv2.warpAffine(alpha, affine_matrix, (mask.shape[1], mask.shape[0]))
+                            mask = cv2.GaussianBlur(mask, (3, 3), 10)
 
+                            mask_r = (255., 255., 255.) - mask
+
+                            mask = mask * (1.0/255)
+                            mask_r = mask_r * (1.0/255)
+
+                            frame = np.uint8(frame * mask_r + wrapImage * mask) ##if we dont have np.uint8, the image will be black
+                            # frame[:,:,:] = frame * mask_r + wrapImage * mask ##i dont know why but if we use frame[:,:,:] then it will normal
+                        # frame = output
             frame = frame[200:-200, 200:-200, :]
         # frame = frame[200:-200, 200:-200, :]
-        video_writer.write(frame)
+        # video_writer.write(frame)
         cv2.imshow('Face Filter', frame)
         if cv2.waitKey(1)&0xFF == 27:
             print("YES")
