@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torchvision.models import get_model, get_model_weights, get_weight, list_models
 
-
 available_models = list_models()
 
 class SimpleResnet(nn.Module):
@@ -41,5 +40,7 @@ class SimpleResnet(nn.Module):
 if __name__ == "__main__":
     print(available_models)
     m = SimpleResnet()
+    total_params  = sum(p.numel() for p in m.parameters() if p.requires_grad)
+    print(total_params)
     output = m(torch.randn(1, 3, 224, 224))
     print(output.shape)

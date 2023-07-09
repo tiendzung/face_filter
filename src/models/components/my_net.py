@@ -96,7 +96,7 @@ if __name__ == "__main__":
     print(ConvNet)
 
     print(conv_block(64, 128)(torch.randn((5, 64, 224,224))).shape)
-    net = ConvNet(conv_block, layers = [1, 1 ,1 ,1])
+    net = ConvNet(conv_block, layers = [1, 2 ,3 ,2])
     params = list(net.parameters())
     print(len(params))
     print(params[0].size()) 
