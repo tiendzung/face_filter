@@ -8,6 +8,10 @@ import cv2
 import pandas as pd
 import csv
 
+def constrainPoint(p, w, h):
+  p = (min(max(p[0], 0), w - 1), min(max(p[1], 0), h - 1))
+  return p
+
 def load_filter_points(annotation_file):
     with open(annotation_file) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=",")

@@ -30,11 +30,6 @@ filters = ['images/sunglasses.png', 'images/sunglasses_2.png', 'images/sunglasse
            'images/glasses.png', 'images/glasses1.png']
 filterIndex = 0
 
-
-device =  torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-print(device)
-mtcnn = MTCNN(thresholds= [0.7, 0.7, 0.8] ,keep_all=True, device = device)
-
 transform = Compose([
                 A.Resize(224, 224),
                 A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -52,21 +47,51 @@ def calculate_inclination(point1, point2):
 
 @hydra.main(version_base="1.3", config_path=config_path, config_name="train.yaml")
 def main(cfg: DictConfig):
+    if not torch.backends.mps.is_available():
+        if not torch.backends.mps.is_built():
+            print("MPS not available because the current PyTorch install was not "
+                "built with MPS enabled.")
+        else:
+            print("MPS not available because the current MacOS version is not 12.3+ "
+                "and/or you do not have an MPS-enabled device on this machine.")
+        mps_device = torch.device("cpu")
+    else:
+        mps_device = torch.device("mps")
+
+    print(mps_device)
+
     net = SimpleResnet()
-    # print(net)
-    model = DlibLitModule.load_from_checkpoint(checkpoint_path='/Users/tiendzung/Project/facial_landmarks-wandb/checkpoints/epoch_095.ckpt', net = net)
-    # print(model)
+    net.to(mps_device)
+
+    model = DlibLitModule.load_from_checkpoint(checkpoint_path=cfg.ckpt_path, net = net)
+    mtcnn = MTCNN(thresholds= [0.7, 0.7, 0.8] ,keep_all=True, device = mps_device)
 
     cap = cv2.VideoCapture(0)
     # cap = cv2.VideoCapture('/Users/tiendzung/Downloads/record-webcam.mov')
     cap.set(cv2.CAP_PROP_FRAME_WIDTH,640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT,480)
+    import logging
+    import time
+    prev_time = time.time()
+    first = True
+    boxes = None
+    faces = None
     while cap.isOpened():
+        cur_time = time.time()
+        logging.info(1 / (cur_time - prev_time))
+        prev_time = cur_time
         isSuccess, frame = cap.read()
         frame = np.pad(frame, ((200, 200), (200, 200), (0, 0)), mode='constant', constant_values=0)
         if isSuccess:
+            # if first is True:
+            #     boxes, _ = mtcnn.detect(frame)
+            #     faces = mtcnn(frame)
+            #     if boxes is not None:
+            #         first = False
+            
             boxes, _ = mtcnn.detect(frame)
             faces = mtcnn(frame)
+            
             if boxes is not None:
                 face_box = []
                 for box in boxes:
@@ -78,7 +103,7 @@ def main(cfg: DictConfig):
                     face = face.permute(1, 2, 0).numpy()*255
                     h = face_box[j][3] - face_box[j][1]
                     w = face_box[j][2] - face_box[j][0]
-                    landmarks = model.forward(transform(image = face)["image"].unsqueeze(0))[0]
+                    landmarks = model.forward(transform(image = face)["image"].unsqueeze(0).to(mps_device))[0].to("cpu")
                     landmarks = (landmarks + 0.5) * torch.Tensor([w, h])
                     landmarks = landmarks + torch.Tensor([face_box[j][0], face_box[j][1]])
                     landmarks = landmarks.detach().numpy()
