@@ -61,3 +61,5 @@ You can run program
 ```bash
 python src/app/app.py
 ```
+## Demo
+![](https://github.com/tiendzung/face_filter/blob/main/final_demo.gif)

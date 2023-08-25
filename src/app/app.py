@@ -92,7 +92,7 @@ def main(cfg: DictConfig):
                 "and/or you do not have an MPS-enabled device on this machine.")
         mps_device = torch.device("cpu")
     else:
-        mps_device = torch.device("cpu")
+        mps_device = torch.device("cpu") ##change to torch.device("mps") if you want to use Apple Silicon GPU
 
     print(mps_device)
 
