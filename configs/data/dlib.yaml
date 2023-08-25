@@ -4,8 +4,8 @@ defaults:
   - transform_train: cutout.yaml
   - transform_val: default.yaml
 
-data_dir: ${paths.data_dir}/ibug_300W_large_face_landmark_dataset
-# data_dir: /Users/tiendzung/Downloads/facial_landmarks-wandb/data/ibug_300W_large_face_landmark_dataset
+# data_dir: ${paths.data_dir}/ibug_300W_large_face_landmark_dataset
+data_dir: /Users/tiendzung/Project/facial_landmarks-wandb/data/ibug_300W_large_face_landmark_dataset
 batch_size: 16
 # train_val_test_split: [5_666,1_000, 1_008]
 train_val_test_split: [50, 5, 5]
@@ -15,7 +15,8 @@ pin_memory: False
 data_set:
   _target_: src.data.dlib_datamodule.DlibDataset
   data_len: 60
-  data_dir: ${paths.data_dir}/ibug_300W_large_face_landmark_dataset
+  data_dir: /Users/tiendzung/Project/facial_landmarks-wandb/data/ibug_300W_large_face_landmark_dataset
+  # data_dir: ${paths.data_dir}/ibug_300W_large_face_landmark_dataset
   xml_file: labels_ibug_300W.xml
 
 

@@ -150,7 +150,6 @@ configs/local/default.yaml
 /data/
 /logs/
 .env
-/data
 /logs
 /outputs/
 

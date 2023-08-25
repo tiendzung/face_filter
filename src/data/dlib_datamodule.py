@@ -129,7 +129,7 @@ class TransformDataset(Dataset):
                 t.mul_(s).add_(m)
             # B, 3, H, W
             return torch.clamp(ten, 0, 1).permute(3, 0, 1, 2)
-
+        
         images = denormalize(image)
         images_to_save = []
         for lm, img in zip(landmarks, images):
@@ -279,7 +279,7 @@ if __name__ == "__main__":
         dataset: DlibDataset = hydra.utils.instantiate(cfg.data_set)
         # dataset = dataset(data_dir=cfg.data_dir)
         print("dataset", len(dataset))
-        image, landmarks = dataset[1]
+        image, landmarks = dataset.__getitem__(1)
         print("image", image.size, "landmarks", landmarks.shape)
         annotated_image = DlibDataset.annotate_image(image, landmarks)
         annotated_image.save(output_path / "test_dataset_result.png")
@@ -309,7 +309,7 @@ if __name__ == "__main__":
 
     @hydra.main(version_base="1.3", config_path=config_path, config_name="dlib.yaml")
     def main(cfg: DictConfig):
-        print(cfg)
+        # print(cfg)
         test_dataset(cfg)
         test_datamodule(cfg)
 
