@@ -157,3 +157,7 @@ checkpoints/
 video/
 
 model_state_dict.ckpt
+
+flagged/
+logs/
+final_demo.mp4
