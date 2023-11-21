@@ -155,3 +155,5 @@ configs/local/default.yaml
 
 checkpoints/
 video/
+
+model_state_dict.ckpt
